@@ -6,8 +6,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-class Pytorch():
+class Pytorch(nn.Module):
     def __init__(self):
+        super(Pytorch, self).__init__()
         self.net = Net()
 
     def train(self, X_train, y_train):
@@ -21,17 +22,17 @@ class Pytorch():
             loss.backward()  # apply this loss backwards thru the network's parameters
             optimizer.step()  # attempt to optimize weights to account for loss/gradients
 
-    def test(self, X_test, y_test):
+    def predict(self, X_test):
         predictions = []
         with torch.no_grad():
-            X, y = torch.tensor(X_test), torch.tensor(y_test)
+            X= torch.tensor(X_test)
             output = self.net(X.view(-1, len(X_test[0])))
             for idx, i in enumerate(output):
                 predictions.append(torch.argmax(i))
         return predictions
 
     def score(self, X_test, y_test):
-        predictions = self.test(X_test, y_test)
+        predictions = self.predict(X_test)
         correct = 0
         for i in range(len(predictions)):
             if predictions[i] == y_test[i]:
@@ -41,8 +42,8 @@ class Pytorch():
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(4, 8)
-        self.fc2 = nn.Linear(8, 2)
+        self.fc1 = nn.Linear(6, 16)
+        self.fc2 = nn.Linear(16, 2)
 
     def forward(self, x):
         x = F.relu(self.fc1(x.float()))
