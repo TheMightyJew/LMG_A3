@@ -1,7 +1,4 @@
 import torch
-import torchvision
-import numpy as np
-from torchvision import transforms, datasets
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim

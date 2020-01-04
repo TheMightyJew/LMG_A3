@@ -9,12 +9,14 @@ from datetime import datetime
 import pytorch
 import random
 
-
+# tokenizer to work later
 tfidfVectorizer = TfidfVectorizer(use_idf=True, stop_words='english')
 tokenizer = tfidfVectorizer.build_tokenizer()
+# save some important dates in order to classify later
 election_date = datetime.strptime('2016-11-16 00:00:00', '%Y-%m-%d %H:%M:%S')
 iphone_date = datetime.strptime('2017-04-01 00:00:01', '%Y-%m-%d %H:%M:%S')
 
+# A function that reads the data from the train file, extract the features and splits it to train and test sets.
 def get_train_data():
     trump_tweets = []
     trump_features = []
@@ -49,20 +51,20 @@ def get_train_data():
     X_train, X_test, y_train, y_test = split_data(trump_features, assistents_features, test_size=0.2)
     return X_train, X_test, y_train, y_test
 
-
+# load the pytorch network is it was the best model
 def load_best_model():
     model = pytorch.Pytorch()
     model.load_state_dict(torch.load('best_model.pt'))
     return model
 
-
+# trains the pytorch network is it was the best model
 def train_best_model():
     X_train, X_test, y_train, y_test = get_train_data()
     torch = pytorch.Pytorch()
     torch.train(X_train, y_train)
     return torch
 
-
+# reads the data from fn and extracts the features, uses the m model to predict the class. Returns an array of 0's and 1's.
 def predict(m, fn):
     tweets_features = []
     tweets = []
@@ -104,7 +106,7 @@ def predict(m, fn):
             predictions.append(1)
     return predictions
 
-
+# classifies a tweet by set of rules, returns the tweet data, tweet classification and most of the features.
 def classify_tweet(splitted):
     tweet_date = datetime.strptime(splitted[3], '%Y-%m-%d %H:%M:%S')
     day = tweet_date.weekday()
@@ -125,7 +127,7 @@ def classify_tweet(splitted):
         class_target = 0
     return tweet, class_target, tweet_data
 
-
+# function that throw away some of the data to make equal size of classification sets.
 def equal_class_sizes(a, b):
     random.shuffle(a)
     random.shuffle(b)
@@ -133,10 +135,9 @@ def equal_class_sizes(a, b):
         a = a[:len(b)]
     elif len(b) > len(a):
         b = b[:len(a)]
-
     return a, b
 
-
+# function that split the data and shuffle it to train and test sets.
 def split_data(trump_tweets, assistents_tweets, test_size):
     zeroes_list = [0] * len(trump_tweets)
     oness_list = [1] * len(assistents_tweets)
@@ -150,13 +151,13 @@ def split_data(trump_tweets, assistents_tweets, test_size):
     X_test, y_test = zip(*test_tmp)
     return X_train, X_test, y_train, y_test
 
-
+# return a dictionary of idf and words for a given text
 def get_dict(tweets):
     tfidf_vectorizer = TfidfVectorizer(use_idf=True)
     tfidf_vectorizer.fit_transform(tweets)
     return tfidf_vectorizer.vocabulary_
 
-
+# returns an array of average idf for each tweet is given both for trump tweets and assistannts tweets
 def get_p(tweets, trump_dict, assistents_dict):
     p = []
     for tweet in tweets:
@@ -176,7 +177,7 @@ def get_p(tweets, trump_dict, assistents_dict):
         p.append((score_trump / counter,score_assistents / counter) )
     return p
 
-
+# function to test all algorithms
 def test_all_algo():
     X_train, X_test, y_train, y_test = get_train_data()
 
@@ -198,7 +199,7 @@ def test_all_algo():
     KNN_score = round(KNN_model.score(X_test, y_test)*100, 2)
     return lr_score, svc_score, l_svc_score, pytorch_score, KNN_score
 
-
+# function that runs all algorithms few time and print averages accuracy.
 def test_avareges(times):
     lr_sum = 0
     svc_sum = 0
@@ -219,4 +220,16 @@ def test_avareges(times):
     print('Pytorch             average: ' + str(round(pytorch_sum/times, 2)) + ' %')
     print('KNN                 average: ' + str(round(KNN_sum/times, 2)) + ' %')
 
-test_avareges(5)
+# function that write predictions to the test file.
+def write_sol():
+    predictions = predict(load_best_model(),'trump_test.tsv')
+    f = open("209202126.txt", "a")
+    for prediction in predictions:
+        f.write(str(prediction) + ' ')
+    f.close()
+
+def main():
+    test_avareges(10)
+
+if __name__ == '__main__':
+    main()
